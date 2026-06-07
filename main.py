@@ -1,7 +1,5 @@
 """Programa principal do sistema de avaliação de livros."""
 
-import importlib
-
 
 MENSAGENS_RETORNO = {
     0: "Operação realizada com sucesso.",
@@ -194,9 +192,9 @@ def avalia_livro(
         return 6
 
     nova_avaliacao = {
+        "id_avaliacao": nota,
         "id_livro": id_livro,
         "id_user": id_user,
-        "nota": nota,
     }
     codigo = cria_avaliacao(nova_avaliacao)
     saida(MENSAGENS_RETORNO[codigo])
@@ -217,7 +215,7 @@ def consulta_avaliacoes_livro(
     return mostra_consulta(acessa_avaliacoes_livro(id_livro), saida)
 
 
-def consulta_nota_livro(calcula_notas, entrada=input, saida=print):
+def consulta_nota_livro(calculaNotas, entrada=input, saida=print):
     """Consulta a nota calculada para um livro."""
     try:
         id_livro = le_texto(entrada, "ID do livro: ")
@@ -225,7 +223,7 @@ def consulta_nota_livro(calcula_notas, entrada=input, saida=print):
         saida(str(erro))
         return 2
 
-    codigo, nota = separa_retorno(calcula_notas(id_livro))
+    codigo, nota = separa_retorno(calculaNotas(id_livro))
     if codigo == 0:
         saida(f"Nota do livro: {nota}")
     else:
@@ -271,7 +269,7 @@ def menu_usuario(funcoes, id_user, entrada=input, saida=print):
                 saida,
             )
         elif opcao == "5":
-            consulta_nota_livro(funcoes["calcula_notas"], entrada, saida)
+            consulta_nota_livro(funcoes["calculaNotas"], entrada, saida)
         else:
             saida("Opção inválida.")
 
@@ -308,9 +306,9 @@ def executa_aplicacao(funcoes, entrada=input, saida=print):
 
 def main():
     """Importa os TADs e inicia a aplicação."""
-    usuarios = importlib.import_module("usuarios")
-    livro = importlib.import_module("livro")
-    avaliacoes = importlib.import_module("avaliacoes")
+    import avaliacoes
+    import livro
+    import usuarios
 
     funcoes = {
         "carrega_usuarios": usuarios.carrega_dados,
@@ -326,7 +324,7 @@ def main():
         "salva_avaliacoes": avaliacoes.salva_dados,
         "cria_avaliacao": avaliacoes.cria_avaliacao,
         "acessa_avaliacoes_livro": avaliacoes.acessa_avaliacoes_livro,
-        "calcula_notas": avaliacoes.calcula_notas,
+        "calculaNotas": avaliacoes.calculaNotas,
     }
     executa_aplicacao(funcoes)
 
