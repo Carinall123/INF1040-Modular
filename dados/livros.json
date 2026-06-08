@@ -1,0 +1,42 @@
+[
+  {
+    "id_livro": 10,
+    "nome": "Dom Casmurro",
+    "autor": "Machado de Assis",
+    "tags": [
+      "romance",
+      "clássico",
+      "brasileiro"
+    ]
+  },
+  {
+    "id_livro": 11,
+    "nome": "O Cortiço",
+    "autor": "Aluísio Azevedo",
+    "tags": [
+      "romance",
+      "naturalismo",
+      "brasileiro"
+    ]
+  },
+  {
+    "id_livro": 12,
+    "nome": "A Revolução dos Bichos",
+    "autor": "George Orwell",
+    "tags": [
+      "ficção",
+      "política",
+      "clássico"
+    ]
+  },
+  {
+    "id_livro": 13,
+    "nome": "Capitães da Areia",
+    "autor": "Jorge Amado",
+    "tags": [
+      "romance",
+      "brasileiro",
+      "drama"
+    ]
+  }
+]
