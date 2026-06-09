@@ -116,20 +116,23 @@ def acessa_avaliacoes_usuario(id_user):
 
 
 def cria_avaliacao(nova_avaliacao):
-    """Cadastra ou sobrescreve a avaliação feita por um usuário.
+    """Cadastra ou sobrescreve a avaliação de um usuário para um livro.
 
     A avaliação recebida deve conter nota, id_livro e id_user. O identificador
     é gerado pelo próprio módulo.
 
     Retorna:
-        0: avaliação cadastrada ou sobrescrita.
+        0: avaliação cadastrada ou sobrescrita para o mesmo usuário e livro.
         2: dados inválidos.
     """
     if not _eh_dados_avaliacao_validos(nova_avaliacao):
         return 2
 
     for indice, avaliacao in enumerate(_avaliacoes):
-        if avaliacao["id_user"] == nova_avaliacao["id_user"] and avaliacao["id_livro"] == nova_avaliacao["id_livro"]:
+        if (
+            avaliacao["id_user"] == nova_avaliacao["id_user"]
+            and avaliacao["id_livro"] == nova_avaliacao["id_livro"]
+        ):
             avaliacao_atualizada = deepcopy(nova_avaliacao)
             avaliacao_atualizada["id_avaliacao"] = avaliacao["id_avaliacao"]
             _avaliacoes[indice] = avaliacao_atualizada
@@ -151,7 +154,7 @@ def modifica_avaliacao(id_avaliacao, nova_avaliacao):
         0: avaliação modificada.
         1: avaliação não encontrada.
         2: dados inválidos.
-        7: o usuário já possui outra avaliação.
+        7: o usuário já possui outra avaliação para o livro.
     """
     if not _eh_dados_avaliacao_validos(nova_avaliacao):
         return 2
@@ -162,6 +165,7 @@ def modifica_avaliacao(id_avaliacao, nova_avaliacao):
                 if (
                     outra_avaliacao["id_avaliacao"] != id_avaliacao
                     and outra_avaliacao["id_user"] == nova_avaliacao["id_user"]
+                    and outra_avaliacao["id_livro"] == nova_avaliacao["id_livro"]
                 ):
                     return 7
 
@@ -253,7 +257,10 @@ def carrega_dados():
 
         substituiu = False
         for indice, avaliacao_atual in enumerate(_avaliacoes):
-            if avaliacao_atual["id_user"] == avaliacao_carregada["id_user"]:
+            if (
+                avaliacao_atual["id_user"] == avaliacao_carregada["id_user"]
+                and avaliacao_atual["id_livro"] == avaliacao_carregada["id_livro"]
+            ):
                 _avaliacoes[indice] = avaliacao_carregada
                 substituiu = True
                 break

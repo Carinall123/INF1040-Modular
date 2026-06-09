@@ -104,7 +104,7 @@ class TesteAvaliacoes(unittest.TestCase):
 
         codigo = cria_avaliacao({
             "nota": 2,
-            "id_livro": 11,
+            "id_livro": 10,
             "id_user": 5,
         })
         codigo_consulta, lista = acessa_avaliacoes_usuario(5)
@@ -114,7 +114,7 @@ class TesteAvaliacoes(unittest.TestCase):
         self.assertEqual(len(lista), 1)
         self.assertEqual(lista[0]["id_avaliacao"], 1)
         self.assertEqual(lista[0]["nota"], 2)
-        self.assertEqual(lista[0]["id_livro"], 11)
+        self.assertEqual(lista[0]["id_livro"], 10)
 
     def test_09_cria_avaliacao_dados_invalidos(self):
         print("\nCaso de Teste 09 - Criar avaliação com dados inválidos")
@@ -281,6 +281,52 @@ class TesteAvaliacoes(unittest.TestCase):
         })
 
         self.assertEqual(codigo, 7)
+
+    def test_23_persiste_avaliacoes_do_usuario_em_livros_diferentes(self):
+        print("\nCaso de Teste 23 - Preservar avaliações em livros diferentes")
+        cria_avaliacao({
+            "nota": 3,
+            "id_livro": 11,
+            "id_user": 5,
+        })
+        cria_avaliacao({
+            "nota": 5,
+            "id_livro": 10,
+            "id_user": 5,
+        })
+
+        salva_dados()
+        carrega_dados()
+        codigo_usuario, lista_usuario = acessa_avaliacoes_usuario(5)
+        codigo_livro_10, lista_livro_10 = acessa_avaliacoes_livro(10)
+        codigo_livro_11, lista_livro_11 = acessa_avaliacoes_livro(11)
+
+        self.assertEqual(codigo_usuario, 0)
+        self.assertEqual(len(lista_usuario), 2)
+        self.assertEqual(codigo_livro_10, 0)
+        self.assertEqual(lista_livro_10[0]["nota"], 5)
+        self.assertEqual(codigo_livro_11, 0)
+        self.assertEqual(lista_livro_11[0]["nota"], 3)
+
+    def test_24_reavalia_livro_apos_carregar_e_preserva_registro(self):
+        print("\nCaso de Teste 24 - Reavaliar após carregar")
+        salva_dados()
+        carrega_dados()
+
+        codigo = cria_avaliacao({
+            "nota": 5,
+            "id_livro": 10,
+            "id_user": 5,
+        })
+        salva_dados()
+        carrega_dados()
+        codigo_livro, lista_livro = acessa_avaliacoes_livro(10)
+
+        self.assertEqual(codigo, 0)
+        self.assertEqual(codigo_livro, 0)
+        self.assertEqual(len(lista_livro), 1)
+        self.assertEqual(lista_livro[0]["id_avaliacao"], 1)
+        self.assertEqual(lista_livro[0]["nota"], 5)
 
 
 if __name__ == "__main__":
