@@ -113,7 +113,7 @@ def cria_avaliacao(nova_avaliacao):
         return 6
 
     for avaliacao in avaliacoes:
-        if avaliacao["id_user"] == nova_avaliacao["id_user"]:
+        if avaliacao["id_user"] == nova_avaliacao["id_user"] and avaliacao["id_livro"] == nova_avaliacao["id_livro"]:
             avaliacao["id_avaliacao"] = nova_avaliacao["id_avaliacao"]
             avaliacao["id_livro"] = nova_avaliacao["id_livro"]
             return 0

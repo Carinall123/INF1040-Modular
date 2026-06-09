@@ -8,5 +8,15 @@
     "id_user": "ton",
     "email": "ton",
     "senha": "ton"
+  },
+  {
+    "id_user": "carina",
+    "email": "carina",
+    "senha": "2"
+  },
+  {
+    "id_user": "a",
+    "email": "a",
+    "senha": "2"
   }
 ]
