@@ -10,5 +10,15 @@
     "nota": 2,
     "id_livro": 10,
     "id_user": "jpt"
+  },
+  {
+    "id_avaliacao": 5,
+    "id_livro": 11,
+    "id_user": "carina"
+  },
+  {
+    "id_avaliacao": 1,
+    "id_livro": 12,
+    "id_user": "carina"
   }
 ]

@@ -129,7 +129,7 @@ def cria_avaliacao(nova_avaliacao):
         return 2
 
     for indice, avaliacao in enumerate(_avaliacoes):
-        if avaliacao["id_user"] == nova_avaliacao["id_user"]:
+        if avaliacao["id_user"] == nova_avaliacao["id_user"] and avaliacao["id_livro"] == nova_avaliacao["id_livro"]:
             avaliacao_atualizada = deepcopy(nova_avaliacao)
             avaliacao_atualizada["id_avaliacao"] = avaliacao["id_avaliacao"]
             _avaliacoes[indice] = avaliacao_atualizada
