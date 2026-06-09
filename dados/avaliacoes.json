@@ -1,11 +1,13 @@
 [
   {
-    "id_avaliacao": 4,
+    "id_avaliacao": 1,
+    "nota": 4,
     "id_livro": 10,
     "id_user": 5
   },
   {
     "id_avaliacao": 2,
+    "nota": 2,
     "id_livro": 10,
     "id_user": "jpt"
   }

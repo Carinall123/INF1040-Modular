@@ -1,37 +1,31 @@
-"""Testes para as funções do módulo usuarios.py."""
+"""Testes automatizados do módulo usuarios com unittest."""
 
+import json
 import os
 import tempfile
 import unittest
 
-from usuarios import *
-import usuarios as modulo_usuarios
-
-
-def imprime_codigo(codigo):
-    mensagens = {
-        0: "Operação realizada com sucesso",
-        1: "Registro não encontrado",
-        2: "Dados inválidos",
-        3: "Identificador já cadastrado",
-    }
-
-    print(f"Código {codigo}: {mensagens[codigo]}")
+from usuarios import (
+    acessa_usuario,
+    carrega_dados,
+    cria_usuario,
+    deleta_usuario,
+    modifica_usuario,
+    salva_dados,
+)
 
 
 class TesteUsuarios(unittest.TestCase):
+    """Testes das funções de acesso do módulo usuarios."""
 
     def setUp(self):
+        self.diretorio_original = os.getcwd()
         self.tempdir = tempfile.TemporaryDirectory()
-        self.arquivo_original = modulo_usuarios.ARQUIVO_DADOS
-        modulo_usuarios.ARQUIVO_DADOS = os.path.join(
-            self.tempdir.name, "usuarios.json"
-        )
-        modulo_usuarios.usuarios.clear()
+        os.chdir(self.tempdir.name)
+        carrega_dados()
 
     def tearDown(self):
-        modulo_usuarios.ARQUIVO_DADOS = self.arquivo_original
-        modulo_usuarios.usuarios.clear()
+        os.chdir(self.diretorio_original)
         self.tempdir.cleanup()
 
     def test_01_acessa_usuario_encontrado(self):
@@ -40,7 +34,6 @@ class TesteUsuarios(unittest.TestCase):
 
         codigo, usuario = acessa_usuario("u1")
 
-        imprime_codigo(codigo)
         self.assertEqual(codigo, 0)
         self.assertEqual(usuario["email"], "u1@email.com")
 
@@ -49,7 +42,6 @@ class TesteUsuarios(unittest.TestCase):
 
         codigo, usuario = acessa_usuario("inexistente")
 
-        imprime_codigo(codigo)
         self.assertEqual(codigo, 1)
         self.assertIsNone(usuario)
 
@@ -60,7 +52,6 @@ class TesteUsuarios(unittest.TestCase):
             {"id_user": "u1", "email": "u1@email.com", "senha": "123"}
         )
 
-        imprime_codigo(codigo)
         self.assertEqual(codigo, 0)
 
     def test_04_cria_usuario_duplicado(self):
@@ -70,7 +61,6 @@ class TesteUsuarios(unittest.TestCase):
 
         codigo = cria_usuario(usuario)
 
-        imprime_codigo(codigo)
         self.assertEqual(codigo, 3)
 
     def test_05_cria_usuario_dados_invalidos(self):
@@ -78,7 +68,6 @@ class TesteUsuarios(unittest.TestCase):
 
         codigo = cria_usuario({"id_user": "", "email": "", "senha": ""})
 
-        imprime_codigo(codigo)
         self.assertEqual(codigo, 2)
 
     def test_06_modifica_usuario_com_sucesso(self):
@@ -86,11 +75,11 @@ class TesteUsuarios(unittest.TestCase):
         cria_usuario({"id_user": "u1", "email": "u1@email.com", "senha": "123"})
 
         codigo = modifica_usuario(
-            "u1", {"id_user": "u1", "email": "novo@email.com", "senha": "456"}
+            "u1",
+            {"id_user": "u1", "email": "novo@email.com", "senha": "456"},
         )
         codigo_consulta, usuario = acessa_usuario("u1")
 
-        imprime_codigo(codigo)
         self.assertEqual(codigo, 0)
         self.assertEqual(codigo_consulta, 0)
         self.assertEqual(usuario["email"], "novo@email.com")
@@ -99,10 +88,10 @@ class TesteUsuarios(unittest.TestCase):
         print("\nCaso de Teste 07 modifica_usuario - Usuário não encontrado")
 
         codigo = modifica_usuario(
-            "u1", {"id_user": "u1", "email": "u1@email.com", "senha": "123"}
+            "u1",
+            {"id_user": "u1", "email": "u1@email.com", "senha": "123"},
         )
 
-        imprime_codigo(codigo)
         self.assertEqual(codigo, 1)
 
     def test_08_modifica_usuario_dados_invalidos(self):
@@ -110,10 +99,10 @@ class TesteUsuarios(unittest.TestCase):
         cria_usuario({"id_user": "u1", "email": "u1@email.com", "senha": "123"})
 
         codigo = modifica_usuario(
-            "u1", {"id_user": "", "email": "", "senha": ""}
+            "u1",
+            {"id_user": "", "email": "", "senha": ""},
         )
 
-        imprime_codigo(codigo)
         self.assertEqual(codigo, 2)
 
     def test_09_deleta_usuario_com_sucesso(self):
@@ -122,7 +111,6 @@ class TesteUsuarios(unittest.TestCase):
 
         codigo = deleta_usuario("u1")
 
-        imprime_codigo(codigo)
         self.assertEqual(codigo, 0)
 
     def test_10_deleta_usuario_nao_encontrado(self):
@@ -130,7 +118,6 @@ class TesteUsuarios(unittest.TestCase):
 
         codigo = deleta_usuario("u1")
 
-        imprime_codigo(codigo)
         self.assertEqual(codigo, 1)
 
     def test_11_persistencia_de_dados(self):
@@ -138,23 +125,44 @@ class TesteUsuarios(unittest.TestCase):
         cria_usuario({"id_user": "u1", "email": "u1@email.com", "senha": "123"})
 
         codigo_salva = salva_dados()
-        modulo_usuarios.usuarios.clear()
-        codigo_carrega = carrega_dados()
+        carrega_dados()
         codigo_consulta, usuario = acessa_usuario("u1")
 
         self.assertEqual(codigo_salva, 0)
-        self.assertEqual(codigo_carrega, 0)
         self.assertEqual(codigo_consulta, 0)
         self.assertEqual(usuario["email"], "u1@email.com")
 
-    def test_12_retorna_usuarios(self):
-        print("\nCaso de Teste 12 retorna_usuarios - Usuários cadastrados")
+    def test_12_consulta_retorna_copia(self):
+        print("\nCaso de Teste 12 usuários - Encapsulamento")
         cria_usuario({"id_user": "u1", "email": "u1@email.com", "senha": "123"})
 
-        lista = retorna_usuarios()
+        _codigo, usuario = acessa_usuario("u1")
+        usuario["email"] = "alterado@email.com"
+        _codigo, usuario_armazenado = acessa_usuario("u1")
 
-        self.assertEqual(len(lista), 1)
-        self.assertEqual(lista[0]["id_user"], "u1")
+        self.assertEqual(usuario_armazenado["email"], "u1@email.com")
+
+    def test_13_modifica_usuario_rejeita_email_duplicado(self):
+        print("\nCaso de Teste 13 - Rejeitar e-mail duplicado")
+        cria_usuario({"id_user": "u1", "email": "u1@email.com", "senha": "123"})
+        cria_usuario({"id_user": "u2", "email": "u2@email.com", "senha": "123"})
+
+        codigo = modifica_usuario(
+            "u2",
+            {"id_user": "u2", "email": "u1@email.com", "senha": "456"},
+        )
+
+        self.assertEqual(codigo, 3)
+
+    def test_14_carrega_dados_invalidos(self):
+        print("\nCaso de Teste 14 - Arquivo de usuários inválido")
+        os.makedirs("dados", exist_ok=True)
+        with open("dados/usuarios.json", "w", encoding="utf-8") as arquivo:
+            json.dump({"conteudo": "invalido"}, arquivo)
+
+        codigo = carrega_dados()
+
+        self.assertEqual(codigo, 2)
 
 
 if __name__ == "__main__":

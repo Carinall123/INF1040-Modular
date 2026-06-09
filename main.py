@@ -2,9 +2,26 @@
 
 import time
 
-import avaliacoes
-import livro
-import usuarios
+from avaliacoes import (
+    acessa_avaliacoes_livro,
+    calculaNotas,
+    carrega_dados as carrega_avaliacoes,
+    cria_avaliacao,
+    salva_dados as salva_avaliacoes,
+)
+from livro import (
+    acessa_livro,
+    acessa_livros,
+    acessa_livros_por_tag,
+    carrega_dados as carrega_livros,
+    salva_dados as salva_livros,
+)
+from usuarios import (
+    acessa_usuario,
+    carrega_dados as carrega_usuarios,
+    cria_usuario,
+    salva_dados as salva_usuarios,
+)
 
 
 TEMPO_PAUSA = 1
@@ -34,18 +51,17 @@ def exibe_retorno(codigo, saida=print):
 
 def carrega_dados():
     """Carrega os dados encapsulados nos módulos da aplicação."""
-    usuarios.carrega_dados()
-    livro.carrega_dados()
-    avaliacoes.carrega_dados()
-    sincroniza_referencias_avaliacoes()
+    carrega_usuarios()
+    carrega_livros()
+    carrega_avaliacoes()
     return 0
 
 
 def salva_dados():
     """Salva os dados encapsulados nos módulos da aplicação."""
-    usuarios.salva_dados()
-    livro.salva_dados()
-    avaliacoes.salva_dados()
+    salva_usuarios()
+    salva_livros()
+    salva_avaliacoes()
     return 0
 
 
@@ -81,13 +97,6 @@ def formata_registro(registro):
     return " | ".join(partes)
 
 
-def sincroniza_referencias_avaliacoes():
-    """Atualiza os IDs válidos de livros e usuários no módulo de avaliações."""
-    avaliacoes.define_livros(livro.retorna_livros())
-    avaliacoes.define_usuarios(usuarios.retorna_usuarios())
-    return 0
-
-
 def cadastra_usuario(entrada=input, saida=print):
     """Solicita os dados de usuário e chama cria_usuario."""
     try:
@@ -103,8 +112,7 @@ def cadastra_usuario(entrada=input, saida=print):
         "email": email,
         "senha": senha,
     }
-    codigo = usuarios.cria_usuario(novo_usuario)
-    sincroniza_referencias_avaliacoes()
+    codigo = cria_usuario(novo_usuario)
     exibe_retorno(codigo, saida)
     return codigo
 
@@ -119,13 +127,8 @@ def autentica_usuario(entrada=input, saida=print):
         pausa()
         return None
 
-    retorno = usuarios.acessa_usuario(id_user)
-    if isinstance(retorno, tuple):
-        codigo, usuario = retorno
-    else:
-        codigo, usuario = retorno, None
-
-    if codigo != 0 or not isinstance(usuario, dict):
+    codigo, usuario = acessa_usuario(id_user)
+    if codigo != 0:
         saida("\n>>> E-mail ou senha incorretos.\n")
         pausa()
         return None
@@ -144,15 +147,9 @@ def lista_livros(entrada=input, saida=print):
     """Lista todos os livros ou os livros associados a uma tag."""
     tag = entrada("Tag (Enter para listar todos): ").strip()
     if tag == "":
-        codigo = livro.acessa_livros()
-        livros = livro.retorna_livros()
+        codigo, livros = acessa_livros()
     else:
-        codigo = livro.acessa_livros_por_tag(tag)
-        livros = []
-        if codigo == 0:
-            for livro_atual in livro.retorna_livros():
-                if tag in livro_atual["tags"]:
-                    livros.append(livro_atual)
+        codigo, livros = acessa_livros_por_tag(tag)
 
     if codigo != 0:
         exibe_retorno(codigo, saida)
@@ -174,30 +171,24 @@ def consulta_livro(entrada=input, saida=print):
         pausa()
         return 2
 
-    codigo = livro.acessa_livro(id_livro)
+    codigo, livro_encontrado = acessa_livro(id_livro)
     if codigo != 0:
         exibe_retorno(codigo, saida)
         return codigo
 
-    for livro_atual in livro.retorna_livros():
-        if livro_atual["id_livro"] == id_livro:
-            saida("\n=== Livro encontrado ===")
-            saida(formata_registro(livro_atual))
-            pausa()
-            return 0
-
-    exibe_retorno(1, saida)
-    return 1
+    saida("\n=== Livro encontrado ===")
+    saida(formata_registro(livro_encontrado))
+    pausa()
+    return 0
 
 
 def seleciona_livro(entrada=input, saida=print):
     """Permite escolher um livro pelo ID exibido no terminal."""
-    codigo = livro.acessa_livros()
+    codigo, livros = acessa_livros()
     if codigo != 0:
         exibe_retorno(codigo, saida)
         return codigo, None
 
-    livros = livro.retorna_livros()
     saida("\n=== Escolha um livro ===")
     for livro_atual in livros:
         saida(
@@ -215,7 +206,7 @@ def seleciona_livro(entrada=input, saida=print):
         pausa()
         return 2, None
 
-    codigo = livro.acessa_livro(id_livro)
+    codigo, _livro = acessa_livro(id_livro)
     if codigo != 0:
         exibe_retorno(codigo, saida)
         return codigo, None
@@ -225,7 +216,11 @@ def seleciona_livro(entrada=input, saida=print):
 
 def avalia_livro(id_user, entrada=input, saida=print):
     """Seleciona um livro e cadastra uma avaliação."""
-    sincroniza_referencias_avaliacoes()
+    codigo, _usuario = acessa_usuario(id_user)
+    if codigo != 0:
+        exibe_retorno(5, saida)
+        return 5
+
     codigo, id_livro = seleciona_livro(entrada, saida)
     if codigo != 0:
         return codigo
@@ -238,18 +233,17 @@ def avalia_livro(id_user, entrada=input, saida=print):
         return 6
 
     nova_avaliacao = {
-        "id_avaliacao": nota,
+        "nota": nota,
         "id_livro": id_livro,
         "id_user": id_user,
     }
-    codigo = avaliacoes.cria_avaliacao(nova_avaliacao)
+    codigo = cria_avaliacao(nova_avaliacao)
     exibe_retorno(codigo, saida)
     return codigo
 
 
 def consulta_avaliacoes_livro(entrada=input, saida=print):
     """Consulta as avaliações associadas a um livro."""
-    sincroniza_referencias_avaliacoes()
     try:
         id_livro = int(le_texto(entrada, "ID do livro: "))
     except ValueError as erro:
@@ -257,7 +251,12 @@ def consulta_avaliacoes_livro(entrada=input, saida=print):
         pausa()
         return 2
 
-    codigo, avaliacoes_livro = avaliacoes.acessa_avaliacoes_livro(id_livro)
+    codigo_livro, _livro = acessa_livro(id_livro)
+    if codigo_livro != 0:
+        exibe_retorno(4, saida)
+        return 4
+
+    codigo, avaliacoes_livro = acessa_avaliacoes_livro(id_livro)
     if codigo == 0:
         saida("\n=== Avaliações do livro ===")
         for avaliacao in avaliacoes_livro:
@@ -271,7 +270,6 @@ def consulta_avaliacoes_livro(entrada=input, saida=print):
 
 def consulta_nota_livro(entrada=input, saida=print):
     """Consulta a nota calculada para um livro."""
-    sincroniza_referencias_avaliacoes()
     try:
         id_livro = int(le_texto(entrada, "ID do livro: "))
     except ValueError as erro:
@@ -279,7 +277,12 @@ def consulta_nota_livro(entrada=input, saida=print):
         pausa()
         return 2
 
-    codigo, nota = avaliacoes.calculaNotas(id_livro)
+    codigo_livro, _livro = acessa_livro(id_livro)
+    if codigo_livro != 0:
+        exibe_retorno(4, saida)
+        return 4
+
+    codigo, nota = calculaNotas(id_livro)
     if codigo == 0:
         saida(f"\n>>> Nota do livro: {nota:.2f}\n")
         pausa()

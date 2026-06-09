@@ -5,48 +5,26 @@ import json
 import os
 
 
-# Convenção dos Códigos de Retorno
-# 0: operação realizada com sucesso
-# 1: registro não encontrado
-# 2: dados inválidos
-# 3: identificador já cadastrado
-# 4: livro inexistente
-# 5: usuário inexistente
-# 6: nota inválida
-# 7: operação não permitida
+_avaliacoes = []
+_proximo_id = 1
+_ARQUIVO_DADOS = os.path.join("dados", "avaliacoes.json")
 
-ARQUIVO_DADOS = os.path.join("dados", "avaliacoes.json")
-
-avaliacoes = []
-livros = set()
-usuarios = set()
-
-
-def define_livros(novos_livros):
-    """Define os IDs dos livros existentes para validação das avaliações."""
-    livros.clear()
-    for livro in novos_livros:
-        if isinstance(livro, dict) and "id_livro" in livro:
-            livros.add(livro["id_livro"])
-        else:
-            livros.add(livro)
-    return 0
+__all__ = [
+    "acessa_avaliacao",
+    "acessa_avaliacoes_livro",
+    "acessa_avaliacoes_usuario",
+    "cria_avaliacao",
+    "modifica_avaliacao",
+    "deleta_avaliacao",
+    "calculaNotas",
+    "carrega_dados",
+    "salva_dados",
+]
 
 
-def define_usuarios(novos_usuarios):
-    """Define os IDs dos usuários existentes para validação das avaliações."""
-    usuarios.clear()
-    for usuario in novos_usuarios:
-        if isinstance(usuario, dict) and "id_user" in usuario:
-            usuarios.add(usuario["id_user"])
-        else:
-            usuarios.add(usuario)
-    return 0
-
-
-def eh_avaliacao_valida(avaliacao):
-    """Valida se uma avaliação possui livro, usuário e nota."""
-    campos_obrigatorios = ["id_avaliacao", "id_livro", "id_user"]
+def _eh_dados_avaliacao_validos(avaliacao):
+    """Valida os dados recebidos para criar ou modificar uma avaliação."""
+    campos_obrigatorios = ["nota", "id_livro", "id_user"]
 
     if not isinstance(avaliacao, dict):
         return False
@@ -54,12 +32,47 @@ def eh_avaliacao_valida(avaliacao):
     if not all(campo in avaliacao for campo in campos_obrigatorios):
         return False
 
-    return isinstance(avaliacao["id_avaliacao"], (int, float))
+    nota = avaliacao["nota"]
+    if not isinstance(nota, (int, float)) or nota < 0 or nota > 5:
+        return False
+
+    if not isinstance(avaliacao["id_livro"], int) or avaliacao["id_livro"] <= 0:
+        return False
+
+    id_user = avaliacao["id_user"]
+    if id_user is None or (isinstance(id_user, str) and id_user.strip() == ""):
+        return False
+
+    return True
+
+
+def _eh_avaliacao_armazenada_valida(avaliacao):
+    """Valida uma avaliação completa armazenada pelo módulo."""
+    if not _eh_dados_avaliacao_validos(avaliacao):
+        return False
+
+    return (
+        isinstance(avaliacao.get("id_avaliacao"), int)
+        and avaliacao["id_avaliacao"] > 0
+    )
+
+
+def _gera_id_avaliacao():
+    """Gera o próximo identificador de avaliação."""
+    global _proximo_id
+    id_avaliacao = _proximo_id
+    _proximo_id = _proximo_id + 1
+    return id_avaliacao
 
 
 def acessa_avaliacao(id_avaliacao):
-    """Retorna uma avaliação a partir do seu ID."""
-    for avaliacao in avaliacoes:
+    """Retorna a primeira avaliação que possui o ID informado.
+
+    Retorna:
+        (0, avaliação): avaliação encontrada.
+        (1, None): avaliação não encontrada.
+    """
+    for avaliacao in _avaliacoes:
         if avaliacao["id_avaliacao"] == id_avaliacao:
             return 0, deepcopy(avaliacao)
 
@@ -67,12 +80,14 @@ def acessa_avaliacao(id_avaliacao):
 
 
 def acessa_avaliacoes_livro(id_livro):
-    """Retorna todas as avaliações associadas a um livro."""
-    if id_livro not in livros:
-        return 4, []
+    """Retorna as avaliações associadas a um livro.
 
+    Retorna:
+        (0, avaliações): existem avaliações para o livro.
+        (1, []): não existem avaliações para o livro.
+    """
     avaliacoes_livro = []
-    for avaliacao in avaliacoes:
+    for avaliacao in _avaliacoes:
         if avaliacao["id_livro"] == id_livro:
             avaliacoes_livro.append(deepcopy(avaliacao))
 
@@ -83,12 +98,14 @@ def acessa_avaliacoes_livro(id_livro):
 
 
 def acessa_avaliacoes_usuario(id_user):
-    """Retorna todas as avaliações feitas por um usuário."""
-    if id_user not in usuarios:
-        return 5, []
+    """Retorna as avaliações feitas por um usuário.
 
+    Retorna:
+        (0, avaliações): existem avaliações do usuário.
+        (1, []): não existem avaliações do usuário.
+    """
     avaliacoes_usuario = []
-    for avaliacao in avaliacoes:
+    for avaliacao in _avaliacoes:
         if avaliacao["id_user"] == id_user:
             avaliacoes_usuario.append(deepcopy(avaliacao))
 
@@ -99,106 +116,160 @@ def acessa_avaliacoes_usuario(id_user):
 
 
 def cria_avaliacao(nova_avaliacao):
-    """Cadastra uma nova avaliação para um livro."""
-    if not eh_avaliacao_valida(nova_avaliacao):
+    """Cadastra ou sobrescreve a avaliação feita por um usuário.
+
+    A avaliação recebida deve conter nota, id_livro e id_user. O identificador
+    é gerado pelo próprio módulo.
+
+    Retorna:
+        0: avaliação cadastrada ou sobrescrita.
+        2: dados inválidos.
+    """
+    if not _eh_dados_avaliacao_validos(nova_avaliacao):
         return 2
 
-    if nova_avaliacao["id_livro"] not in livros:
-        return 4
-
-    if nova_avaliacao["id_user"] not in usuarios:
-        return 5
-
-    if nova_avaliacao["id_avaliacao"] < 0 or nova_avaliacao["id_avaliacao"] > 5:
-        return 6
-
-    for avaliacao in avaliacoes:
+    for indice, avaliacao in enumerate(_avaliacoes):
         if avaliacao["id_user"] == nova_avaliacao["id_user"]:
-            avaliacao["id_avaliacao"] = nova_avaliacao["id_avaliacao"]
-            avaliacao["id_livro"] = nova_avaliacao["id_livro"]
+            avaliacao_atualizada = deepcopy(nova_avaliacao)
+            avaliacao_atualizada["id_avaliacao"] = avaliacao["id_avaliacao"]
+            _avaliacoes[indice] = avaliacao_atualizada
             return 0
 
-    avaliacoes.append(deepcopy(nova_avaliacao))
+    avaliacao_cadastrada = deepcopy(nova_avaliacao)
+    avaliacao_cadastrada["id_avaliacao"] = _gera_id_avaliacao()
+    _avaliacoes.append(avaliacao_cadastrada)
     return 0
 
 
 def modifica_avaliacao(id_avaliacao, nova_avaliacao):
-    """Modifica uma avaliação já cadastrada."""
-    if not eh_avaliacao_valida(nova_avaliacao):
+    """Modifica uma avaliação já cadastrada.
+
+    A avaliação recebida deve conter nota, id_livro e id_user. O identificador
+    informado é preservado.
+
+    Retorna:
+        0: avaliação modificada.
+        1: avaliação não encontrada.
+        2: dados inválidos.
+        7: o usuário já possui outra avaliação.
+    """
+    if not _eh_dados_avaliacao_validos(nova_avaliacao):
         return 2
 
-    if nova_avaliacao["id_avaliacao"] < 0 or nova_avaliacao["id_avaliacao"] > 5:
-        return 2
-
-    for avaliacao in avaliacoes:
+    for indice, avaliacao in enumerate(_avaliacoes):
         if avaliacao["id_avaliacao"] == id_avaliacao:
-            avaliacao["id_avaliacao"] = nova_avaliacao["id_avaliacao"]
-            avaliacao["id_livro"] = nova_avaliacao["id_livro"]
-            avaliacao["id_user"] = nova_avaliacao["id_user"]
+            for outra_avaliacao in _avaliacoes:
+                if (
+                    outra_avaliacao["id_avaliacao"] != id_avaliacao
+                    and outra_avaliacao["id_user"] == nova_avaliacao["id_user"]
+                ):
+                    return 7
+
+            avaliacao_atualizada = deepcopy(nova_avaliacao)
+            avaliacao_atualizada["id_avaliacao"] = id_avaliacao
+            _avaliacoes[indice] = avaliacao_atualizada
             return 0
 
     return 1
 
 
 def deleta_avaliacao(id_avaliacao):
-    """Remove uma avaliação cadastrada."""
-    for avaliacao in avaliacoes:
+    """Remove uma avaliação cadastrada.
+
+    Retorna:
+        0: avaliação removida.
+        1: avaliação não encontrada.
+    """
+    for avaliacao in _avaliacoes:
         if avaliacao["id_avaliacao"] == id_avaliacao:
-            avaliacoes.remove(avaliacao)
+            _avaliacoes.remove(avaliacao)
             return 0
 
     return 1
 
 
 def calculaNotas(id_livro):
-    """Calcula a nota de um livro a partir das avaliações cadastradas."""
+    """Calcula a média das avaliações de um livro.
+
+    Retorna:
+        (0, nota): média calculada.
+        (1, None): livro sem avaliações.
+    """
     codigo, avaliacoes_livro = acessa_avaliacoes_livro(id_livro)
     if codigo != 0:
         return codigo, None
 
     soma = 0
     for avaliacao in avaliacoes_livro:
-        soma = soma + avaliacao["id_avaliacao"]
+        soma = soma + avaliacao["nota"]
 
     return 0, soma / len(avaliacoes_livro)
 
 
 def carrega_dados():
-    """Carrega os dados de avaliações do arquivo do módulo."""
-    if not os.path.exists(ARQUIVO_DADOS):
-        avaliacoes.clear()
+    """Carrega as avaliações do arquivo para a estrutura encapsulada.
+
+    Retorna:
+        0: dados carregados ou arquivo ainda inexistente.
+        2: conteúdo do arquivo inválido.
+    """
+    global _proximo_id
+    _avaliacoes.clear()
+    _proximo_id = 1
+
+    if not os.path.exists(_ARQUIVO_DADOS):
         return 0
 
-    with open(ARQUIVO_DADOS, "r", encoding="utf-8") as arquivo:
+    with open(_ARQUIVO_DADOS, "r", encoding="utf-8") as arquivo:
         dados = json.load(arquivo)
 
-    avaliacoes.clear()
-    if isinstance(dados, list):
-        for avaliacao_nova in dados:
-            if not isinstance(avaliacao_nova, dict) or "id_user" not in avaliacao_nova:
-                continue
-
-            substituiu = False
-            for indice, avaliacao in enumerate(avaliacoes):
-                if avaliacao["id_user"] == avaliacao_nova["id_user"]:
-                    avaliacoes[indice] = deepcopy(avaliacao_nova)
-                    substituiu = True
-                    break
-
-            if not substituiu:
-                avaliacoes.append(deepcopy(avaliacao_nova))
-        return 0
-
     if isinstance(dados, dict):
-        avaliacoes.append(deepcopy(dados))
-        return 0
+        dados = [dados]
 
-    return 2
+    if not isinstance(dados, list):
+        return 2
+
+    ids_encontrados = set()
+    for avaliacao in dados:
+        if not isinstance(avaliacao, dict):
+            _avaliacoes.clear()
+            return 2
+
+        avaliacao_carregada = deepcopy(avaliacao)
+        if "nota" not in avaliacao_carregada:
+            avaliacao_carregada["nota"] = avaliacao_carregada.get("id_avaliacao")
+            avaliacao_carregada["id_avaliacao"] = _proximo_id
+
+        if not _eh_avaliacao_armazenada_valida(avaliacao_carregada):
+            _avaliacoes.clear()
+            return 2
+
+        id_avaliacao = avaliacao_carregada["id_avaliacao"]
+        if id_avaliacao in ids_encontrados:
+            _avaliacoes.clear()
+            return 2
+
+        ids_encontrados.add(id_avaliacao)
+
+        substituiu = False
+        for indice, avaliacao_atual in enumerate(_avaliacoes):
+            if avaliacao_atual["id_user"] == avaliacao_carregada["id_user"]:
+                _avaliacoes[indice] = avaliacao_carregada
+                substituiu = True
+                break
+
+        if not substituiu:
+            _avaliacoes.append(avaliacao_carregada)
+
+        if id_avaliacao >= _proximo_id:
+            _proximo_id = id_avaliacao + 1
+
+    return 0
 
 
 def salva_dados():
-    """Grava os dados de avaliações no arquivo do módulo."""
-    os.makedirs(os.path.dirname(ARQUIVO_DADOS), exist_ok=True)
-    with open(ARQUIVO_DADOS, "w", encoding="utf-8") as arquivo:
-        json.dump(avaliacoes, arquivo, ensure_ascii=False, indent=2)
+    """Grava as avaliações encapsuladas no arquivo e retorna 0."""
+    os.makedirs(os.path.dirname(_ARQUIVO_DADOS), exist_ok=True)
+    with open(_ARQUIVO_DADOS, "w", encoding="utf-8") as arquivo:
+        json.dump(_avaliacoes, arquivo, ensure_ascii=False, indent=2)
     return 0
