@@ -30,8 +30,8 @@ class TesteLivro(unittest.TestCase):
         os.chdir(self.diretorio_original)
         self.tempdir.cleanup()
 
-    def test_acessa_livro(self):
-        print("\nTeste acessa_livro")
+    def test_01_acessa_livro(self):
+        print("\nCaso de Teste 01 - Acessar livro")
         cria_livro({
             "id_livro": 1,
             "nome": "Dom Casmurro",
@@ -50,8 +50,8 @@ class TesteLivro(unittest.TestCase):
         self.assertEqual(codigo_invalido, 2)
         self.assertIsNone(livro_invalido)
 
-    def test_acessa_livros(self):
-        print("\nTeste acessa_livros")
+    def test_02_acessa_livros(self):
+        print("\nCaso de Teste 02 - Acessar todos os livros")
 
         codigo_vazio, lista_vazia = acessa_livros()
         cria_livro({
@@ -67,8 +67,8 @@ class TesteLivro(unittest.TestCase):
         self.assertEqual(codigo, 0)
         self.assertEqual(len(livros), 1)
 
-    def test_acessa_livros_por_tag(self):
-        print("\nTeste acessa_livros_por_tag")
+    def test_03_acessa_livros_por_tag(self):
+        print("\nCaso de Teste 03 - Acessar livros por tag")
         cria_livro({
             "id_livro": 3,
             "nome": "Iracema",
@@ -87,8 +87,8 @@ class TesteLivro(unittest.TestCase):
         self.assertEqual(codigo_invalido, 2)
         self.assertEqual(lista_invalida, [])
 
-    def test_cria_livro(self):
-        print("\nTeste cria_livro")
+    def test_04_cria_livro(self):
+        print("\nCaso de Teste 04 - Criar livro")
         livro = {
             "id_livro": 4,
             "nome": "Memorias Postumas",
@@ -116,8 +116,8 @@ class TesteLivro(unittest.TestCase):
         self.assertEqual(codigo_nome_duplicado, 3)
         self.assertEqual(codigo_invalido, 2)
 
-    def test_modifica_livro(self):
-        print("\nTeste modifica_livro")
+    def test_05_modifica_livro(self):
+        print("\nCaso de Teste 05 - Modificar livro")
         cria_livro({
             "id_livro": 5,
             "nome": "Livro Antigo",
@@ -144,8 +144,8 @@ class TesteLivro(unittest.TestCase):
         self.assertEqual(codigo_inexistente, 1)
         self.assertEqual(codigo_invalido, 2)
 
-    def test_deleta_livro(self):
-        print("\nTeste deleta_livro")
+    def test_06_deleta_livro(self):
+        print("\nCaso de Teste 06 - Deletar livro")
         cria_livro({
             "id_livro": 6,
             "nome": "Livro para Remover",
@@ -159,8 +159,8 @@ class TesteLivro(unittest.TestCase):
         self.assertEqual(codigo, 0)
         self.assertEqual(codigo_inexistente, 1)
 
-    def test_consulta_retorna_copia(self):
-        print("\nTeste encapsulamento dos livros")
+    def test_07_consulta_retorna_copia(self):
+        print("\nCaso de Teste 07 - Encapsulamento dos livros")
         cria_livro({
             "id_livro": 7,
             "nome": "Original",
@@ -174,8 +174,8 @@ class TesteLivro(unittest.TestCase):
 
         self.assertEqual(livro_armazenado["nome"], "Original")
 
-    def test_persistencia_de_dados(self):
-        print("\nTeste persistência dos livros")
+    def test_08_persistencia_de_dados(self):
+        print("\nCaso de Teste 08 - Persistência dos livros")
         cria_livro({
             "id_livro": 8,
             "nome": "Persistente",
@@ -191,8 +191,8 @@ class TesteLivro(unittest.TestCase):
         self.assertEqual(codigo_consulta, 0)
         self.assertEqual(livro["nome"], "Persistente")
 
-    def test_modifica_livro_rejeita_alteracao_de_id(self):
-        print("\nTeste alteração do ID do livro")
+    def test_09_modifica_livro_rejeita_alteracao_de_id(self):
+        print("\nCaso de Teste 09 - Rejeitar alteração do ID do livro")
         cria_livro({
             "id_livro": 9,
             "nome": "Livro",
@@ -209,8 +209,8 @@ class TesteLivro(unittest.TestCase):
 
         self.assertEqual(codigo, 2)
 
-    def test_modifica_livro_rejeita_nome_duplicado(self):
-        print("\nTeste alteração para nome já cadastrado")
+    def test_10_modifica_livro_rejeita_nome_duplicado(self):
+        print("\nCaso de Teste 10 - Rejeitar nome de livro duplicado")
         cria_livro({
             "id_livro": 11,
             "nome": "Primeiro Livro",
@@ -233,8 +233,8 @@ class TesteLivro(unittest.TestCase):
 
         self.assertEqual(codigo, 3)
 
-    def test_carrega_dados_invalidos(self):
-        print("\nTeste arquivo de livros inválido")
+    def test_11_carrega_dados_invalidos(self):
+        print("\nCaso de Teste 11 - Arquivo de livros inválido")
         os.makedirs("dados", exist_ok=True)
         with open("dados/livros.json", "w", encoding="utf-8") as arquivo:
             json.dump({"conteudo": "invalido"}, arquivo)
@@ -243,8 +243,8 @@ class TesteLivro(unittest.TestCase):
 
         self.assertEqual(codigo, 2)
 
-    def test_carrega_dados_rejeita_nomes_duplicados(self):
-        print("\nTeste nomes duplicados no arquivo de livros")
+    def test_12_carrega_dados_rejeita_nomes_duplicados(self):
+        print("\nCaso de Teste 12 - Nomes duplicados no arquivo de livros")
         os.makedirs("dados", exist_ok=True)
         with open("dados/livros.json", "w", encoding="utf-8") as arquivo:
             json.dump([
