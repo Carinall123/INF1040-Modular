@@ -1,17 +1,5 @@
 [
   {
-    "id_avaliacao": 1,
-    "nota": 4,
-    "id_livro": 10,
-    "id_user": 5
-  },
-  {
-    "id_avaliacao": 2,
-    "nota": 2,
-    "id_livro": 10,
-    "id_user": "jpt"
-  },
-  {
     "nota": 2,
     "id_livro": 11,
     "id_user": "carina",
@@ -22,5 +10,17 @@
     "id_livro": 12,
     "id_user": "carina",
     "id_avaliacao": 4
+  },
+  {
+    "nota": 4,
+    "id_livro": 10,
+    "id_user": "carina",
+    "id_avaliacao": 5
+  },
+  {
+    "nota": 2,
+    "id_livro": 10,
+    "id_user": "jpt",
+    "id_avaliacao": 6
   }
 ]

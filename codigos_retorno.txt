@@ -1,0 +1,8 @@
+• 0: operação realizada com sucesso.
+• 1: registro não encontrado.
+• 2: dados inválidos.
+• 3: identificador já cadastrado.
+• 4: livro inexistente.
+• 5: usuário inexistente.
+• 6: nota inválida.
+• 7: operação não permitida

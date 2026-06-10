@@ -45,15 +45,25 @@ def _eh_livro_valido(livro):
     return True
 
 
-def acessa_livro(id_livro):
-    """Retorna o livro indicado pelo ID.
+def _normaliza_nome(nome):
+    """Normaliza um nome de livro para comparação."""
+    return nome.strip().casefold()
+
+
+def acessa_livro(nome_livro):
+    """Retorna o livro indicado pelo nome.
 
     Retorna:
         (0, livro): livro encontrado.
         (1, None): livro não encontrado.
+        (2, None): nome inválido.
     """
+    if not isinstance(nome_livro, str) or nome_livro.strip() == "":
+        return 2, None
+
+    nome_procurado = _normaliza_nome(nome_livro)
     for livro in _livros:
-        if livro["id_livro"] == id_livro:
+        if _normaliza_nome(livro["nome"]) == nome_procurado:
             return 0, deepcopy(livro)
 
     return 1, None
@@ -100,13 +110,17 @@ def cria_livro(novo_livro):
     Retorna:
         0: livro cadastrado.
         2: dados inválidos.
-        3: ID já cadastrado.
+        3: ID ou nome já cadastrado.
     """
     if not _eh_livro_valido(novo_livro):
         return 2
 
     for livro in _livros:
-        if livro["id_livro"] == novo_livro["id_livro"]:
+        if (
+            livro["id_livro"] == novo_livro["id_livro"]
+            or _normaliza_nome(livro["nome"])
+            == _normaliza_nome(novo_livro["nome"])
+        ):
             return 3
 
     _livros.append(deepcopy(novo_livro))
@@ -120,6 +134,7 @@ def modifica_livro(id_livro, novo_livro):
         0: livro modificado.
         1: livro não encontrado.
         2: dados inválidos ou tentativa de alterar o ID.
+        3: nome já cadastrado em outro livro.
     """
     if not _eh_livro_valido(novo_livro):
         return 2
@@ -128,6 +143,15 @@ def modifica_livro(id_livro, novo_livro):
         if livro["id_livro"] == id_livro:
             if novo_livro["id_livro"] != id_livro:
                 return 2
+
+            for outro_livro in _livros:
+                if (
+                    outro_livro["id_livro"] != id_livro
+                    and _normaliza_nome(outro_livro["nome"])
+                    == _normaliza_nome(novo_livro["nome"])
+                ):
+                    return 3
+
             _livros[indice] = deepcopy(novo_livro)
             return 0
 
@@ -167,10 +191,22 @@ def carrega_dados():
     if not isinstance(dados, list):
         return 2
 
+    ids_carregados = set()
+    nomes_carregados = set()
+
     for livro in dados:
         if not _eh_livro_valido(livro):
             _livros.clear()
             return 2
+
+        id_livro = livro["id_livro"]
+        nome_livro = _normaliza_nome(livro["nome"])
+        if id_livro in ids_carregados or nome_livro in nomes_carregados:
+            _livros.clear()
+            return 2
+
+        ids_carregados.add(id_livro)
+        nomes_carregados.add(nome_livro)
         _livros.append(deepcopy(livro))
 
     return 0

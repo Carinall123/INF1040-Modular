@@ -147,13 +147,17 @@ class TestMain(unittest.TestCase):
         print("Caso de Teste 07 - Exibir retorno de livro inexistente")
         mensagens = []
 
-        codigo = consulta_livro(entrada_com("99"), saida_em(mensagens))
+        codigo = consulta_livro(
+            entrada_com("Livro inexistente"),
+            saida_em(mensagens),
+        )
 
         self.assertEqual(codigo, 1)
         self.assertIn("Registro não encontrado.", mensagens[-1])
 
     def test_08_cria_avaliacao_com_livro_selecionado(self):
         print("Caso de Teste 08 - Criar avaliação escolhendo livro")
+        mensagens = []
         cria_livro({
             "id_livro": 10,
             "nome": "Livro",
@@ -163,11 +167,15 @@ class TestMain(unittest.TestCase):
 
         codigo = avalia_livro(
             "jpt",
-            entrada_com("10", "5"),
-            lambda _mensagem: None,
+            entrada_com("Livro", "5"),
+            saida_em(mensagens),
         )
 
         self.assertEqual(codigo, 0)
+        self.assertIn(
+            "ID: 10 | Livro: Livro | Autor: Autor",
+            mensagens,
+        )
 
     def test_09_avaliacao_do_mesmo_usuario_sobrescreve_anterior(self):
         print("Caso de Teste 09 - Sobrescrever avaliação do mesmo usuário")
@@ -178,10 +186,10 @@ class TestMain(unittest.TestCase):
             "tags": [],
         })
 
-        avalia_livro("jpt", entrada_com("10", "4"), lambda _mensagem: None)
+        avalia_livro("jpt", entrada_com("Livro", "4"), lambda _mensagem: None)
         codigo = avalia_livro(
             "jpt",
-            entrada_com("10", "5"),
+            entrada_com("livro", "5"),
             lambda _mensagem: None,
         )
         codigo_consulta, lista = acessa_avaliacoes_usuario("jpt")
@@ -191,6 +199,7 @@ class TestMain(unittest.TestCase):
         self.assertEqual(len(lista), 1)
         self.assertEqual(lista[0]["id_avaliacao"], 1)
         self.assertEqual(lista[0]["nota"], 5)
+        self.assertEqual(lista[0]["id_livro"], 10)
 
     def test_10_cria_avaliacao_rejeita_nota_invalida(self):
         print("Caso de Teste 10 - Rejeitar avaliação com nota inválida")
@@ -203,7 +212,7 @@ class TestMain(unittest.TestCase):
 
         codigo = avalia_livro(
             "jpt",
-            entrada_com("10", "6"),
+            entrada_com("Livro", "6"),
             lambda _mensagem: None,
         )
 
@@ -225,7 +234,7 @@ class TestMain(unittest.TestCase):
         })
 
         codigo = consulta_avaliacoes_livro(
-            entrada_com("10"),
+            entrada_com("Livro"),
             saida_em(mensagens),
         )
 
@@ -247,7 +256,10 @@ class TestMain(unittest.TestCase):
             "id_user": 5,
         })
 
-        codigo = consulta_nota_livro(entrada_com("10"), saida_em(mensagens))
+        codigo = consulta_nota_livro(
+            entrada_com("Livro"),
+            saida_em(mensagens),
+        )
 
         self.assertEqual(codigo, 0)
         self.assertTrue(
@@ -295,7 +307,7 @@ class TestMain(unittest.TestCase):
         print("Caso de Teste 16 - Consultar avaliações de livro inexistente")
 
         codigo = consulta_avaliacoes_livro(
-            entrada_com("99"),
+            entrada_com("Livro inexistente"),
             lambda _mensagem: None,
         )
 
@@ -305,17 +317,17 @@ class TestMain(unittest.TestCase):
         print("Caso de Teste 17 - Consultar nota de livro inexistente")
 
         codigo = consulta_nota_livro(
-            entrada_com("99"),
+            entrada_com("Livro inexistente"),
             lambda _mensagem: None,
         )
 
         self.assertEqual(codigo, 4)
 
-    def test_18_consulta_livro_rejeita_id_invalido(self):
-        print("Caso de Teste 18 - Rejeitar ID de livro inválido")
+    def test_18_consulta_livro_rejeita_nome_vazio(self):
+        print("Caso de Teste 18 - Rejeitar nome de livro vazio")
 
         codigo = consulta_livro(
-            entrada_com("texto"),
+            entrada_com(""),
             lambda _mensagem: None,
         )
 
@@ -341,7 +353,7 @@ class TestMain(unittest.TestCase):
         })
 
         codigo = consulta_avaliacoes_livro(
-            entrada_com("10"),
+            entrada_com("Livro"),
             lambda _mensagem: None,
         )
 
@@ -357,7 +369,7 @@ class TestMain(unittest.TestCase):
         })
 
         codigo = consulta_nota_livro(
-            entrada_com("10"),
+            entrada_com("Livro"),
             lambda _mensagem: None,
         )
 

@@ -39,13 +39,16 @@ class TesteLivro(unittest.TestCase):
             "tags": ["romance", "classico"],
         })
 
-        codigo, livro = acessa_livro(1)
-        codigo_inexistente, livro_inexistente = acessa_livro(99)
+        codigo, livro = acessa_livro("  dom casmurro  ")
+        codigo_inexistente, livro_inexistente = acessa_livro("Inexistente")
+        codigo_invalido, livro_invalido = acessa_livro("")
 
         self.assertEqual(codigo, 0)
         self.assertEqual(livro["nome"], "Dom Casmurro")
         self.assertEqual(codigo_inexistente, 1)
         self.assertIsNone(livro_inexistente)
+        self.assertEqual(codigo_invalido, 2)
+        self.assertIsNone(livro_invalido)
 
     def test_acessa_livros(self):
         print("\nTeste acessa_livros")
@@ -95,6 +98,12 @@ class TesteLivro(unittest.TestCase):
 
         codigo = cria_livro(livro)
         codigo_duplicado = cria_livro(livro)
+        codigo_nome_duplicado = cria_livro({
+            "id_livro": 40,
+            "nome": "  MEMORIAS POSTUMAS ",
+            "autor": "Outro Autor",
+            "tags": [],
+        })
         codigo_invalido = cria_livro({
             "id_livro": "",
             "nome": "",
@@ -104,6 +113,7 @@ class TesteLivro(unittest.TestCase):
 
         self.assertEqual(codigo, 0)
         self.assertEqual(codigo_duplicado, 3)
+        self.assertEqual(codigo_nome_duplicado, 3)
         self.assertEqual(codigo_invalido, 2)
 
     def test_modifica_livro(self):
@@ -158,9 +168,9 @@ class TesteLivro(unittest.TestCase):
             "tags": [],
         })
 
-        _codigo, livro = acessa_livro(7)
+        _codigo, livro = acessa_livro("Original")
         livro["nome"] = "Alterado externamente"
-        _codigo, livro_armazenado = acessa_livro(7)
+        _codigo, livro_armazenado = acessa_livro("Original")
 
         self.assertEqual(livro_armazenado["nome"], "Original")
 
@@ -175,7 +185,7 @@ class TesteLivro(unittest.TestCase):
 
         codigo_salva = salva_dados()
         carrega_dados()
-        codigo_consulta, livro = acessa_livro(8)
+        codigo_consulta, livro = acessa_livro("Persistente")
 
         self.assertEqual(codigo_salva, 0)
         self.assertEqual(codigo_consulta, 0)
@@ -199,6 +209,30 @@ class TesteLivro(unittest.TestCase):
 
         self.assertEqual(codigo, 2)
 
+    def test_modifica_livro_rejeita_nome_duplicado(self):
+        print("\nTeste alteração para nome já cadastrado")
+        cria_livro({
+            "id_livro": 11,
+            "nome": "Primeiro Livro",
+            "autor": "Autor",
+            "tags": [],
+        })
+        cria_livro({
+            "id_livro": 12,
+            "nome": "Segundo Livro",
+            "autor": "Autor",
+            "tags": [],
+        })
+
+        codigo = modifica_livro(12, {
+            "id_livro": 12,
+            "nome": " primeiro livro ",
+            "autor": "Outro Autor",
+            "tags": [],
+        })
+
+        self.assertEqual(codigo, 3)
+
     def test_carrega_dados_invalidos(self):
         print("\nTeste arquivo de livros inválido")
         os.makedirs("dados", exist_ok=True)
@@ -208,6 +242,32 @@ class TesteLivro(unittest.TestCase):
         codigo = carrega_dados()
 
         self.assertEqual(codigo, 2)
+
+    def test_carrega_dados_rejeita_nomes_duplicados(self):
+        print("\nTeste nomes duplicados no arquivo de livros")
+        os.makedirs("dados", exist_ok=True)
+        with open("dados/livros.json", "w", encoding="utf-8") as arquivo:
+            json.dump([
+                {
+                    "id_livro": 1,
+                    "nome": "Livro",
+                    "autor": "Autor",
+                    "tags": [],
+                },
+                {
+                    "id_livro": 2,
+                    "nome": "  LIVRO ",
+                    "autor": "Outro Autor",
+                    "tags": [],
+                },
+            ], arquivo)
+
+        codigo = carrega_dados()
+        codigo_consulta, livros = acessa_livros()
+
+        self.assertEqual(codigo, 2)
+        self.assertEqual(codigo_consulta, 1)
+        self.assertEqual(livros, [])
 
 
 if __name__ == "__main__":

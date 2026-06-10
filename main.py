@@ -163,15 +163,15 @@ def lista_livros(entrada=input, saida=print):
 
 
 def consulta_livro(entrada=input, saida=print):
-    """Consulta e exibe um livro a partir de seu ID."""
+    """Consulta e exibe um livro a partir de seu nome."""
     try:
-        id_livro = int(le_texto(entrada, "ID do livro: "))
+        nome_livro = le_texto(entrada, "Nome do livro: ")
     except ValueError as erro:
         saida(f"\n>>> {erro}\n")
         pausa()
         return 2
 
-    codigo, livro_encontrado = acessa_livro(id_livro)
+    codigo, livro_encontrado = acessa_livro(nome_livro)
     if codigo != 0:
         exibe_retorno(codigo, saida)
         return codigo
@@ -183,7 +183,7 @@ def consulta_livro(entrada=input, saida=print):
 
 
 def seleciona_livro(entrada=input, saida=print):
-    """Permite escolher um livro pelo ID exibido no terminal."""
+    """Permite escolher um livro pelo nome exibido no terminal."""
     codigo, livros = acessa_livros()
     if codigo != 0:
         exibe_retorno(codigo, saida)
@@ -193,25 +193,23 @@ def seleciona_livro(entrada=input, saida=print):
     for livro_atual in livros:
         saida(
             f"ID: {livro_atual['id_livro']} | "
-            f"{livro_atual['nome']} | "
-            f"{livro_atual['autor']}"
+            f"Livro: {livro_atual['nome']} | "
+            f"Autor: {livro_atual['autor']}"
         )
 
     try:
-        id_livro = int(le_texto(entrada, "Digite o ID do livro: "))
-        if id_livro < 1:
-            raise ValueError
-    except ValueError:
-        saida("\n>>> ID de livro inválido.\n")
+        nome_livro = le_texto(entrada, "Digite o nome do livro: ")
+    except ValueError as erro:
+        saida(f"\n>>> {erro}\n")
         pausa()
         return 2, None
 
-    codigo, _livro = acessa_livro(id_livro)
+    codigo, livro_encontrado = acessa_livro(nome_livro)
     if codigo != 0:
         exibe_retorno(codigo, saida)
         return codigo, None
 
-    return 0, id_livro
+    return 0, livro_encontrado["id_livro"]
 
 
 def avalia_livro(id_user, entrada=input, saida=print):
@@ -245,17 +243,18 @@ def avalia_livro(id_user, entrada=input, saida=print):
 def consulta_avaliacoes_livro(entrada=input, saida=print):
     """Consulta as avaliações associadas a um livro."""
     try:
-        id_livro = int(le_texto(entrada, "ID do livro: "))
+        nome_livro = le_texto(entrada, "Nome do livro: ")
     except ValueError as erro:
         saida(f"\n>>> {erro}\n")
         pausa()
         return 2
 
-    codigo_livro, _livro = acessa_livro(id_livro)
+    codigo_livro, livro_encontrado = acessa_livro(nome_livro)
     if codigo_livro != 0:
         exibe_retorno(4, saida)
         return 4
 
+    id_livro = livro_encontrado["id_livro"]
     codigo, avaliacoes_livro = acessa_avaliacoes_livro(id_livro)
     if codigo == 0:
         saida("\n=== Avaliações do livro ===")
@@ -271,17 +270,18 @@ def consulta_avaliacoes_livro(entrada=input, saida=print):
 def consulta_nota_livro(entrada=input, saida=print):
     """Consulta a nota calculada para um livro."""
     try:
-        id_livro = int(le_texto(entrada, "ID do livro: "))
+        nome_livro = le_texto(entrada, "Nome do livro: ")
     except ValueError as erro:
         saida(f"\n>>> {erro}\n")
         pausa()
         return 2
 
-    codigo_livro, _livro = acessa_livro(id_livro)
+    codigo_livro, livro_encontrado = acessa_livro(nome_livro)
     if codigo_livro != 0:
         exibe_retorno(4, saida)
         return 4
 
+    id_livro = livro_encontrado["id_livro"]
     codigo, nota = calculaNotas(id_livro)
     if codigo == 0:
         saida(f"\n>>> Nota do livro: {nota:.2f}\n")
