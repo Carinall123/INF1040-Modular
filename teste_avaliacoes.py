@@ -29,7 +29,7 @@ class TesteAvaliacoes(unittest.TestCase):
         cria_avaliacao({
             "nota": 4,
             "id_livro": 10,
-            "id_user": 5,
+            "email": "cinco@email.com",
         })
 
     def tearDown(self):
@@ -72,7 +72,7 @@ class TesteAvaliacoes(unittest.TestCase):
     def test_05_acessa_avaliacoes_usuario_encontradas(self):
         print("\nCaso de Teste 05 - Acessar avaliações de usuário")
 
-        codigo, lista = acessa_avaliacoes_usuario(5)
+        codigo, lista = acessa_avaliacoes_usuario("cinco@email.com")
 
         self.assertEqual(codigo, 0)
         self.assertEqual(len(lista), 1)
@@ -91,7 +91,7 @@ class TesteAvaliacoes(unittest.TestCase):
         codigo = cria_avaliacao({
             "nota": 5,
             "id_livro": 10,
-            "id_user": "jpt",
+            "email": "jpt",
         })
         codigo_consulta, avaliacao = acessa_avaliacao(2)
 
@@ -105,9 +105,9 @@ class TesteAvaliacoes(unittest.TestCase):
         codigo = cria_avaliacao({
             "nota": 2,
             "id_livro": 10,
-            "id_user": 5,
+            "email": "cinco@email.com",
         })
-        codigo_consulta, lista = acessa_avaliacoes_usuario(5)
+        codigo_consulta, lista = acessa_avaliacoes_usuario("cinco@email.com")
 
         self.assertEqual(codigo, 0)
         self.assertEqual(codigo_consulta, 0)
@@ -122,7 +122,7 @@ class TesteAvaliacoes(unittest.TestCase):
         codigo = cria_avaliacao({
             "nota": 8,
             "id_livro": 10,
-            "id_user": 5,
+            "email": "cinco@email.com",
         })
 
         self.assertEqual(codigo, 2)
@@ -133,7 +133,7 @@ class TesteAvaliacoes(unittest.TestCase):
         codigo = modifica_avaliacao(1, {
             "nota": 3,
             "id_livro": 10,
-            "id_user": 5,
+            "email": "cinco@email.com",
         })
         _codigo, avaliacao = acessa_avaliacao(1)
 
@@ -146,7 +146,7 @@ class TesteAvaliacoes(unittest.TestCase):
         codigo = modifica_avaliacao(999, {
             "nota": 3,
             "id_livro": 10,
-            "id_user": 5,
+            "email": "cinco@email.com",
         })
 
         self.assertEqual(codigo, 1)
@@ -157,7 +157,7 @@ class TesteAvaliacoes(unittest.TestCase):
         codigo = modifica_avaliacao(1, {
             "nota": 8,
             "id_livro": 10,
-            "id_user": 5,
+            "email": "cinco@email.com",
         })
 
         self.assertEqual(codigo, 2)
@@ -181,7 +181,7 @@ class TesteAvaliacoes(unittest.TestCase):
         cria_avaliacao({
             "nota": 2,
             "id_livro": 10,
-            "id_user": "jpt",
+            "email": "jpt",
         })
 
         codigo, nota = calculaNotas(10)
@@ -229,11 +229,11 @@ class TesteAvaliacoes(unittest.TestCase):
         self.assertEqual(codigo, 2)
 
     def test_20_migra_formato_antigo(self):
-        print("\nCaso de Teste 20 - Migrar avaliação sem campo nota")
+        print("\nCaso de Teste 20 - Migrar avaliação sem nota")
         os.makedirs("dados", exist_ok=True)
         with open("dados/avaliacoes.json", "w", encoding="utf-8") as arquivo:
             json.dump(
-                [{"id_avaliacao": 4, "id_livro": 10, "id_user": "antigo"}],
+                [{"id_avaliacao": 4, "id_livro": 10, "email": "antigo"}],
                 arquivo,
             )
 
@@ -244,13 +244,14 @@ class TesteAvaliacoes(unittest.TestCase):
         self.assertEqual(codigo_consulta, 0)
         self.assertEqual(lista[0]["id_avaliacao"], 1)
         self.assertEqual(lista[0]["nota"], 4)
+        self.assertEqual(lista[0]["email"], "antigo")
 
     def test_21_novo_id_continua_apos_recarregar(self):
         print("\nCaso de Teste 21 - Continuar geração de IDs")
         cria_avaliacao({
             "nota": 3,
             "id_livro": 10,
-            "id_user": "u2",
+            "email": "u2",
         })
         salva_dados()
         carrega_dados()
@@ -258,7 +259,7 @@ class TesteAvaliacoes(unittest.TestCase):
         codigo = cria_avaliacao({
             "nota": 5,
             "id_livro": 10,
-            "id_user": "u3",
+            "email": "u3",
         })
         codigo_consulta, avaliacao = acessa_avaliacao(3)
 
@@ -271,13 +272,13 @@ class TesteAvaliacoes(unittest.TestCase):
         cria_avaliacao({
             "nota": 3,
             "id_livro": 10,
-            "id_user": "u2",
+            "email": "u2",
         })
 
         codigo = modifica_avaliacao(2, {
             "nota": 5,
             "id_livro": 10,
-            "id_user": 5,
+            "email": "cinco@email.com",
         })
 
         self.assertEqual(codigo, 7)
@@ -287,17 +288,17 @@ class TesteAvaliacoes(unittest.TestCase):
         cria_avaliacao({
             "nota": 3,
             "id_livro": 11,
-            "id_user": 5,
+            "email": "cinco@email.com",
         })
         cria_avaliacao({
             "nota": 5,
             "id_livro": 10,
-            "id_user": 5,
+            "email": "cinco@email.com",
         })
 
         salva_dados()
         carrega_dados()
-        codigo_usuario, lista_usuario = acessa_avaliacoes_usuario(5)
+        codigo_usuario, lista_usuario = acessa_avaliacoes_usuario("cinco@email.com")
         codigo_livro_10, lista_livro_10 = acessa_avaliacoes_livro(10)
         codigo_livro_11, lista_livro_11 = acessa_avaliacoes_livro(11)
 
@@ -316,7 +317,7 @@ class TesteAvaliacoes(unittest.TestCase):
         codigo = cria_avaliacao({
             "nota": 5,
             "id_livro": 10,
-            "id_user": 5,
+            "email": "cinco@email.com",
         })
         salva_dados()
         carrega_dados()

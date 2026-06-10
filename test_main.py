@@ -60,8 +60,8 @@ class TestMain(unittest.TestCase):
         carrega_usuarios()
         carrega_livros()
         carrega_avaliacoes()
-        cria_usuario({"id_user": 5, "email": "cinco", "senha": "123"})
-        cria_usuario({"id_user": "jpt", "email": "jpt", "senha": "jpt"})
+        cria_usuario({"email": "cinco", "senha": "123"})
+        cria_usuario({"email": "jpt", "senha": "jpt"})
         self.pausa = patch("main.time.sleep", return_value=None)
         self.pausa.start()
 
@@ -96,22 +96,22 @@ class TestMain(unittest.TestCase):
     def test_03_autentica_usuario_com_sucesso(self):
         print("Caso de Teste 03 - Autenticar usuário com sucesso")
 
-        id_user = autentica_usuario(
+        email = autentica_usuario(
             entrada_com("jpt", "jpt"),
             lambda _mensagem: None,
         )
 
-        self.assertEqual(id_user, "jpt")
+        self.assertEqual(email, "jpt")
 
     def test_04_autenticacao_rejeita_senha_incorreta(self):
         print("Caso de Teste 04 - Rejeitar autenticação com senha incorreta")
 
-        id_user = autentica_usuario(
+        email = autentica_usuario(
             entrada_com("jpt", "errada"),
             lambda _mensagem: None,
         )
 
-        self.assertIsNone(id_user)
+        self.assertIsNone(email)
 
     def test_05_lista_todos_os_livros(self):
         print("Caso de Teste 05 - Listar todos os livros")
@@ -230,7 +230,7 @@ class TestMain(unittest.TestCase):
         cria_avaliacao({
             "nota": 4,
             "id_livro": 10,
-            "id_user": 5,
+            "email": "cinco",
         })
 
         codigo = consulta_avaliacoes_livro(
@@ -239,7 +239,7 @@ class TestMain(unittest.TestCase):
         )
 
         self.assertEqual(codigo, 0)
-        self.assertTrue(any("id_user: 5" in mensagem for mensagem in mensagens))
+        self.assertTrue(any("email: cinco" in mensagem for mensagem in mensagens))
 
     def test_12_consulta_nota_calculada_do_livro(self):
         print("Caso de Teste 12 - Consultar nota calculada de um livro")
@@ -253,7 +253,7 @@ class TestMain(unittest.TestCase):
         cria_avaliacao({
             "nota": 4,
             "id_livro": 10,
-            "id_user": 5,
+            "email": "cinco",
         })
 
         codigo = consulta_nota_livro(
@@ -292,8 +292,27 @@ class TestMain(unittest.TestCase):
 
         self.assertTrue(os.path.exists("dados/usuarios.json"))
 
-    def test_15_avaliacao_rejeita_usuario_inexistente(self):
-        print("Caso de Teste 15 - Rejeitar usuário inexistente")
+    def test_15_falha_de_carga_nao_sobrescreve_arquivo_invalido(self):
+        print("Caso de Teste 15 - Preservar arquivo inválido após falha de carga")
+        os.makedirs("dados", exist_ok=True)
+        conteudo_invalido = '{"conteudo": "invalido"}'
+        with open("dados/livros.json", "w", encoding="utf-8") as arquivo:
+            arquivo.write(conteudo_invalido)
+
+        codigo = executa_aplicacao(
+            entrada_com("0"),
+            lambda _mensagem: None,
+        )
+
+        with open("dados/livros.json", "r", encoding="utf-8") as arquivo:
+            conteudo_apos_execucao = arquivo.read()
+
+        self.assertEqual(codigo, 2)
+        self.assertEqual(conteudo_apos_execucao, conteudo_invalido)
+        self.assertFalse(os.path.exists("dados/avaliacoes.json"))
+
+    def test_16_avaliacao_rejeita_usuario_inexistente(self):
+        print("Caso de Teste 16 - Rejeitar usuário inexistente")
 
         codigo = avalia_livro(
             "inexistente",
@@ -303,8 +322,8 @@ class TestMain(unittest.TestCase):
 
         self.assertEqual(codigo, 5)
 
-    def test_16_consulta_avaliacoes_livro_inexistente(self):
-        print("Caso de Teste 16 - Consultar avaliações de livro inexistente")
+    def test_17_consulta_avaliacoes_livro_inexistente(self):
+        print("Caso de Teste 17 - Consultar avaliações de livro inexistente")
 
         codigo = consulta_avaliacoes_livro(
             entrada_com("Livro inexistente"),
@@ -313,8 +332,8 @@ class TestMain(unittest.TestCase):
 
         self.assertEqual(codigo, 4)
 
-    def test_17_consulta_nota_livro_inexistente(self):
-        print("Caso de Teste 17 - Consultar nota de livro inexistente")
+    def test_18_consulta_nota_livro_inexistente(self):
+        print("Caso de Teste 18 - Consultar nota de livro inexistente")
 
         codigo = consulta_nota_livro(
             entrada_com("Livro inexistente"),
@@ -323,8 +342,8 @@ class TestMain(unittest.TestCase):
 
         self.assertEqual(codigo, 4)
 
-    def test_18_consulta_livro_rejeita_nome_vazio(self):
-        print("Caso de Teste 18 - Rejeitar nome de livro vazio")
+    def test_19_consulta_livro_rejeita_nome_vazio(self):
+        print("Caso de Teste 19 - Rejeitar nome de livro vazio")
 
         codigo = consulta_livro(
             entrada_com(""),
@@ -333,8 +352,8 @@ class TestMain(unittest.TestCase):
 
         self.assertEqual(codigo, 2)
 
-    def test_19_lista_livros_sem_resultados(self):
-        print("Caso de Teste 19 - Tag sem livros")
+    def test_20_lista_livros_sem_resultados(self):
+        print("Caso de Teste 20 - Tag sem livros")
 
         codigo = lista_livros(
             entrada_com("terror"),
@@ -343,8 +362,8 @@ class TestMain(unittest.TestCase):
 
         self.assertEqual(codigo, 1)
 
-    def test_20_consulta_avaliacoes_livro_sem_avaliacoes(self):
-        print("Caso de Teste 20 - Livro sem avaliações")
+    def test_21_consulta_avaliacoes_livro_sem_avaliacoes(self):
+        print("Caso de Teste 21 - Livro sem avaliações")
         cria_livro({
             "id_livro": 10,
             "nome": "Livro",
@@ -359,8 +378,8 @@ class TestMain(unittest.TestCase):
 
         self.assertEqual(codigo, 1)
 
-    def test_21_consulta_nota_livro_sem_avaliacoes(self):
-        print("Caso de Teste 21 - Livro sem nota")
+    def test_22_consulta_nota_livro_sem_avaliacoes(self):
+        print("Caso de Teste 22 - Livro sem nota")
         cria_livro({
             "id_livro": 10,
             "nome": "Livro",
@@ -375,8 +394,8 @@ class TestMain(unittest.TestCase):
 
         self.assertEqual(codigo, 1)
 
-    def test_22_menu_usuario_rejeita_opcao_invalida(self):
-        print("Caso de Teste 22 - Opção inválida no menu do usuário")
+    def test_23_menu_usuario_rejeita_opcao_invalida(self):
+        print("Caso de Teste 23 - Opção inválida no menu do usuário")
         mensagens = []
 
         menu_usuario(
@@ -387,8 +406,8 @@ class TestMain(unittest.TestCase):
 
         self.assertTrue(any("Opção inválida." in mensagem for mensagem in mensagens))
 
-    def test_23_menu_principal_rejeita_opcao_invalida(self):
-        print("Caso de Teste 23 - Opção inválida no menu principal")
+    def test_24_menu_principal_rejeita_opcao_invalida(self):
+        print("Caso de Teste 24 - Opção inválida no menu principal")
         mensagens = []
 
         executa_aplicacao(

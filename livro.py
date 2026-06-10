@@ -51,12 +51,19 @@ def _normaliza_nome(nome):
 
 
 def acessa_livro(nome_livro):
-    """Retorna o livro indicado pelo nome.
+    """Consulta um livro pelo nome.
+
+    Parâmetros:
+        nome_livro: Texto com o nome procurado. A comparação ignora espaços
+            no início e no fim e diferenças entre maiúsculas e minúsculas.
 
     Retorna:
-        (0, livro): livro encontrado.
-        (1, None): livro não encontrado.
-        (2, None): nome inválido.
+        (0, livro): Livro encontrado. O registro retornado é uma cópia.
+        (1, None): Livro não encontrado.
+        (2, None): Nome não textual, vazio ou formado somente por espaços.
+
+    Efeito no TAD:
+        Não altera os livros armazenados.
     """
     if not isinstance(nome_livro, str) or nome_livro.strip() == "":
         return 2, None
@@ -70,11 +77,17 @@ def acessa_livro(nome_livro):
 
 
 def acessa_livros():
-    """Retorna todos os livros cadastrados.
+    """Consulta todos os livros cadastrados.
+
+    Parâmetros:
+        Nenhum.
 
     Retorna:
-        (0, livros): existem livros cadastrados.
-        (1, []): não existem livros cadastrados.
+        (0, livros): Lista com cópias de todos os livros.
+        (1, []): Não existem livros cadastrados.
+
+    Efeito no TAD:
+        Não altera os livros armazenados.
     """
     if len(_livros) == 0:
         return 1, []
@@ -83,12 +96,19 @@ def acessa_livros():
 
 
 def acessa_livros_por_tag(tag):
-    """Retorna os livros associados a uma tag.
+    """Consulta os livros que possuem uma tag.
+
+    Parâmetros:
+        tag: Texto comparado de forma exata com os elementos da lista ``tags``
+            de cada livro.
 
     Retorna:
-        (0, livros): foram encontrados livros com a tag.
-        (1, []): nenhum livro possui a tag.
-        (2, []): tag inválida.
+        (0, livros): Lista com cópias dos livros encontrados.
+        (1, []): Nenhum livro possui a tag.
+        (2, []): Tag não textual, vazia ou formada somente por espaços.
+
+    Efeito no TAD:
+        Não altera os livros armazenados.
     """
     if not isinstance(tag, str) or tag.strip() == "":
         return 2, []
@@ -105,12 +125,22 @@ def acessa_livros_por_tag(tag):
 
 
 def cria_livro(novo_livro):
-    """Cadastra um novo livro.
+    """Cadastra um livro.
+
+    Parâmetros:
+        novo_livro: Dicionário completo com ``id_livro``, ``nome``, ``autor``
+            e ``tags``. O ID deve ser inteiro positivo; nome e autor devem ser
+            textos não vazios; tags deve ser uma lista.
 
     Retorna:
-        0: livro cadastrado.
-        2: dados inválidos.
-        3: ID ou nome já cadastrado.
+        0: Livro cadastrado.
+        2: Registro ausente, incompleto ou com algum campo inválido.
+        3: Já existe livro com o mesmo ``id_livro`` ou nome. A comparação dos
+            nomes ignora espaços externos e diferenças entre maiúsculas e
+            minúsculas.
+
+    Efeito no TAD:
+        Em caso de sucesso, armazena uma cópia de ``novo_livro``.
     """
     if not _eh_livro_valido(novo_livro):
         return 2
@@ -128,13 +158,21 @@ def cria_livro(novo_livro):
 
 
 def modifica_livro(id_livro, novo_livro):
-    """Modifica um livro já cadastrado.
+    """Substitui os dados de um livro preservando seu identificador.
+
+    Parâmetros:
+        id_livro: Identificador do livro que será modificado.
+        novo_livro: Registro completo com os novos dados do livro.
 
     Retorna:
-        0: livro modificado.
-        1: livro não encontrado.
-        2: dados inválidos ou tentativa de alterar o ID.
-        3: nome já cadastrado em outro livro.
+        0: Livro modificado.
+        1: Livro não encontrado.
+        2: Novos dados inválidos ou tentativa de alterar ``id_livro``.
+        3: O novo nome pertence a outro livro.
+
+    Efeito no TAD:
+        Em caso de sucesso, substitui o registro por uma cópia de
+        ``novo_livro``.
     """
     if not _eh_livro_valido(novo_livro):
         return 2
@@ -159,11 +197,17 @@ def modifica_livro(id_livro, novo_livro):
 
 
 def deleta_livro(id_livro):
-    """Remove um livro cadastrado.
+    """Remove um livro por seu identificador.
+
+    Parâmetros:
+        id_livro: Identificador usado para localizar o livro.
 
     Retorna:
-        0: livro removido.
-        1: livro não encontrado.
+        0: Livro removido.
+        1: Livro não encontrado.
+
+    Efeito no TAD:
+        Remove o registro encontrado.
     """
     for livro in _livros:
         if livro["id_livro"] == id_livro:
@@ -174,11 +218,22 @@ def deleta_livro(id_livro):
 
 
 def carrega_dados():
-    """Carrega os livros do arquivo para a estrutura encapsulada.
+    """Inicializa o TAD com o conteúdo de ``dados/livros.json``.
+
+    Parâmetros:
+        Nenhum.
 
     Retorna:
-        0: dados carregados ou arquivo ainda inexistente.
-        2: conteúdo do arquivo inválido.
+        0: Arquivo carregado ou arquivo ainda inexistente.
+        2: O conteúdo JSON não é uma lista válida, contém livro inválido ou
+            contém IDs ou nomes duplicados.
+
+    Efeito no TAD:
+        Limpa os dados atuais antes da leitura. Se o conteúdo estrutural for
+        inválido, o TAD permanece vazio.
+
+    Exceções:
+        Erros de leitura e JSON malformado são propagados ao módulo cliente.
     """
     _livros.clear()
 
@@ -213,7 +268,21 @@ def carrega_dados():
 
 
 def salva_dados():
-    """Grava os livros encapsulados no arquivo e retorna 0."""
+    """Persiste os livros encapsulados em ``dados/livros.json``.
+
+    Parâmetros:
+        Nenhum.
+
+    Retorna:
+        0: Dados gravados.
+
+    Efeito externo:
+        Cria o diretório ``dados``, quando necessário, e substitui o conteúdo
+        do arquivo pelo estado atual do TAD.
+
+    Exceções:
+        Erros do sistema de arquivos são propagados ao módulo cliente.
+    """
     os.makedirs(os.path.dirname(_ARQUIVO_DADOS), exist_ok=True)
     with open(_ARQUIVO_DADOS, "w", encoding="utf-8") as arquivo:
         json.dump(_livros, arquivo, ensure_ascii=False, indent=2)

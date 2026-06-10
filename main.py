@@ -50,18 +50,36 @@ def exibe_retorno(codigo, saida=print):
 
 
 def carrega_dados():
-    """Carrega os dados encapsulados nos módulos da aplicação."""
-    carrega_usuarios()
-    carrega_livros()
-    carrega_avaliacoes()
+    """Carrega os dados dos TADs e retorna o primeiro código de erro."""
+    codigo = carrega_usuarios()
+    if codigo != 0:
+        return codigo
+
+    codigo = carrega_livros()
+    if codigo != 0:
+        return codigo
+
+    codigo = carrega_avaliacoes()
+    if codigo != 0:
+        return codigo
+
     return 0
 
 
 def salva_dados():
-    """Salva os dados encapsulados nos módulos da aplicação."""
-    salva_usuarios()
-    salva_livros()
-    salva_avaliacoes()
+    """Salva os dados dos TADs e retorna o primeiro código de erro."""
+    codigo = salva_usuarios()
+    if codigo != 0:
+        return codigo
+
+    codigo = salva_livros()
+    if codigo != 0:
+        return codigo
+
+    codigo = salva_avaliacoes()
+    if codigo != 0:
+        return codigo
+
     return 0
 
 
@@ -108,7 +126,6 @@ def cadastra_usuario(entrada=input, saida=print):
         return 2
 
     novo_usuario = {
-        "id_user": email,
         "email": email,
         "senha": senha,
     }
@@ -120,14 +137,14 @@ def cadastra_usuario(entrada=input, saida=print):
 def autentica_usuario(entrada=input, saida=print):
     """Autentica um usuário usando acessa_usuario."""
     try:
-        id_user = le_texto(entrada, "E-mail: ")
+        email = le_texto(entrada, "E-mail: ")
         senha = le_texto(entrada, "Senha: ")
     except ValueError as erro:
         saida(f"\n>>> {erro}\n")
         pausa()
         return None
 
-    codigo, usuario = acessa_usuario(id_user)
+    codigo, usuario = acessa_usuario(email)
     if codigo != 0:
         saida("\n>>> E-mail ou senha incorretos.\n")
         pausa()
@@ -140,7 +157,7 @@ def autentica_usuario(entrada=input, saida=print):
 
     saida("\n>>> Login realizado com sucesso.\n")
     pausa()
-    return usuario.get("id_user", id_user)
+    return usuario["email"]
 
 
 def lista_livros(entrada=input, saida=print):
@@ -212,9 +229,9 @@ def seleciona_livro(entrada=input, saida=print):
     return 0, livro_encontrado["id_livro"]
 
 
-def avalia_livro(id_user, entrada=input, saida=print):
+def avalia_livro(email, entrada=input, saida=print):
     """Seleciona um livro e cadastra uma avaliação."""
-    codigo, _usuario = acessa_usuario(id_user)
+    codigo, _usuario = acessa_usuario(email)
     if codigo != 0:
         exibe_retorno(5, saida)
         return 5
@@ -233,7 +250,7 @@ def avalia_livro(id_user, entrada=input, saida=print):
     nova_avaliacao = {
         "nota": nota,
         "id_livro": id_livro,
-        "id_user": id_user,
+        "email": email,
     }
     codigo = cria_avaliacao(nova_avaliacao)
     exibe_retorno(codigo, saida)
@@ -292,7 +309,7 @@ def consulta_nota_livro(entrada=input, saida=print):
     return codigo
 
 
-def menu_usuario(id_user, entrada=input, saida=print):
+def menu_usuario(email, entrada=input, saida=print):
     """Executa o menu disponível após autenticação."""
     while True:
         saida(
@@ -312,7 +329,7 @@ def menu_usuario(id_user, entrada=input, saida=print):
         elif opcao == "2":
             consulta_livro(entrada, saida)
         elif opcao == "3":
-            avalia_livro(id_user, entrada, saida)
+            avalia_livro(email, entrada, saida)
         elif opcao == "4":
             consulta_avaliacoes_livro(entrada, saida)
         elif opcao == "5":
@@ -324,7 +341,14 @@ def menu_usuario(id_user, entrada=input, saida=print):
 
 def executa_aplicacao(entrada=input, saida=print):
     """Executa a aplicação pelo terminal."""
-    carrega_dados()
+    codigo = carrega_dados()
+    if codigo != 0:
+        saida(
+            "\n>>> Não foi possível carregar os dados. "
+            "Os arquivos não serão alterados.\n"
+        )
+        pausa()
+        return codigo
 
     try:
         while True:
@@ -336,9 +360,9 @@ def executa_aplicacao(entrada=input, saida=print):
             if opcao == "1":
                 cadastra_usuario(entrada, saida)
             elif opcao == "2":
-                id_user = autentica_usuario(entrada, saida)
-                if id_user is not None:
-                    menu_usuario(id_user, entrada, saida)
+                email = autentica_usuario(entrada, saida)
+                if email is not None:
+                    menu_usuario(email, entrada, saida)
             else:
                 saida("\n>>> Opção inválida.\n")
                 pausa()
